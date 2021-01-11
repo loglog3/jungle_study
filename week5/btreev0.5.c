@@ -129,8 +129,7 @@ int Pred(Node *x) {
     }
 
     int i = (x->N) + 1;
-    x = x->c[i];
-    Pred(x);
+    Pred(x->c[i]);
 }
 //후행키찾기
 int Succ(Node *x) {
@@ -138,8 +137,7 @@ int Succ(Node *x) {
         int newKey = x->key[1];
         return newKey;
     }
-    x = x->c[1];  // 한단계 더 깊이, 근데 1이 아니다.
-    Succ(x);
+    Succ(x->c[1]);
 }
 
 void delete_Key(Node **root_address, Node *x, int k) {
@@ -154,6 +152,7 @@ void delete_Key(Node **root_address, Node *x, int k) {
                 return;
             }
         }
+        return;
     }
     // case 2-3
     int i = 1;
@@ -181,10 +180,11 @@ void delete_Key(Node **root_address, Node *x, int k) {
         Node *y = x->c[i];
         Node *z = x->c[i + 1];
         int m = y->N;
-        int p = y->N;
+        int p = z->N;
         y->key[m + 1] = k;
         for (int j = 1; j <= p; j++) {
             y->key[m + 1 + j] = z->key[j];
+            // y->key[m + j] = z->key[j];
         }
         y->N = m + p + 1;
         for (int j = i + 1; j <= (x->N); j++) {  //부모노드 k, c 조정 (수정해봄)
@@ -196,9 +196,9 @@ void delete_Key(Node **root_address, Node *x, int k) {
 
         x->N = x->N - 1;  // 부모노드 크기조정
 
-        if (x->N == 0) {       // 만약 x의 크기가 0이면, 지워주고 루트노드 재설정해주기
-            free(x);           // 루트 삭제
-            root_address = y;  // 루트 재설정
+        if (x->N == 0) {        // 만약 x의 크기가 0이면, 지워주고 루트노드 재설정해주기
+            free(x);            // 루트 삭제
+            *root_address = y;  // 루트 재설정
         }
 
         free(z);                         // z노드 메모리 제거
@@ -218,7 +218,6 @@ void delete_Key(Node **root_address, Node *x, int k) {
         x->key[i] = x->c[i + 1]->key[1];                 // 부모의 key는 우측자식의 1번key가 된다
         x->c[i]->c[min_degree + 1] = x->c[i + 1]->c[1];  // 충분형제에서 부족으로 자식포인터 이동
 
-        // x->c[i]->N = min_degree;                         // (promising 자식갯수 갱신) 위에서 했었는데?!
         for (int j = 1; j < x->c[i + 1]->N; j++) {
             x->c[i + 1]->key[j] = x->c[i + 1]->key[j + 1];  //충분형제 key 당기기
         }
@@ -231,13 +230,20 @@ void delete_Key(Node **root_address, Node *x, int k) {
     }
     // case 3.a-2 - left sibling 오른쪽끝에있음
     if (i >= 2 && x->c[i - 1]->N >= min_degree) {  // promising자식 부족, 왼쪽형제 충분 (중요 확인필요) // 좌측sibling 찾고싶은데, 맨 왼쪽에있는애는 이걸 못한다. 그 조건이 i>=2
-        int siblingSize = x->c[i - 1]->N;
-        x->c[i]->N = x->c[i]->N + 1;                                   // 아래는 풍족해짐
-        x->c[i]->key[min_degree] = x->key[i];                          // 위에 값 i 로 내려주기
-        x->key[i] = x->c[i - 1]->key[siblingSize];                     // 왼쪽 형제 가장 큰값을 부모로 올리기
-        x->c[i]->c[min_degree + 1] = x->c[i - 1]->c[siblingSize + 1];  // 충분형제에서 부족으로 자식포인터 이동
-        x->c[i]->N = min_degree;                                       // promising 자식갯수 갱신
-        x->c[i - 1]->N = x->c[i - 1]->N - 1;                           // 왼쪽의 충분형제는 크기가 하나 줄어든다 여기 오타...
+        x->c[i]->N = x->c[i]->N + 1;               //
+
+        for (int j = min_degree - 1; j >= 1; j--) {
+            x->c[i]->key[j + 1] = x->c[i]->key[j];
+        }
+        for (int j = min_degree; j >= 1; j--) {
+            x->c[i]->c[j + 1] = x->c[i]->c[j];
+        }
+        //키를 1에 넣으니까. 미리 키를 오른쪽으로 밀어줘야한다
+        x->c[i]->key[1] = x->key[i];                         // 위에 값 i 로 내려주기 얘!
+        x->key[i] = x->c[i - 1]->key[x->c[i - 1]->N];        // 왼쪽 형제 가장 큰값을 부모로 올리기
+        x->c[i]->c[1] = x->c[i - 1]->c[x->c[i - 1]->N + 1];  // 충분형제에서 부족으로 자식포인터 이동
+        x->c[i]->N = min_degree;                             // promising 자식갯수 갱신
+        x->c[i - 1]->N = x->c[i - 1]->N - 1;                 // 왼쪽의 충분형제는 크기가 하나 줄어든다 여기 오타...
         // right sibling 처럼 별도의 k나 c 이동작업 없이 N만 줄여주면 된다.
         delete_Key(root_address, x->c[i], k);
         return;  // 들어가는거 맞겠지? 이게 맞아?
@@ -251,9 +257,11 @@ void delete_Key(Node **root_address, Node *x, int k) {
         y->key[m + 1] = x->key[i - 1];  // x에서 y오른쪽끝으로 내리기 여기서는 i-1이 해당하는 녀석이다 (맞음)
         for (int j = 1; j <= p; j++) {  // z노드에서 y노드로 키 복사
             y->key[m + 1 + j] = z->key[j];
+            // y->key[m + j] = z->key[j];
         }
         for (int j = 1; j <= p + 1; j++) {  //z노드에서 y노드로 child Ptr 복사
             y->c[m + 1 + j] = z->c[j];
+            // y->c[m + j] = z->c[j];
         }
         y->N = m + p + 1;                      // 크기 갱신
         for (int j = i + 1; j <= x->N; j++) {  // 부모노드의 자식포인터 갱신 (수정해봄)
@@ -264,9 +272,9 @@ void delete_Key(Node **root_address, Node *x, int k) {
         }
         x->N = x->N - 1;
 
-        if (x->N == 0) {       // 만약 x의 크기가 0이면, 지워주고 루트노드 재설정해주기
-            free(x);           // 루트 삭제
-            root_address = y;  // 루트 재설정
+        if (x->N == 0) {        // 만약 x의 크기가 0이면, 지워주고 루트노드 재설정해주기
+            free(x);            // 루트 삭제
+            *root_address = y;  // 루트 재설정
         }
 
         free(z);
@@ -280,9 +288,11 @@ void delete_Key(Node **root_address, Node *x, int k) {
         y->key[m + 1] = x->key[i];      // x에서 y오른쪽끝으로 내리기 여기서는 i-1이 해당하는 녀석이다 (맞음) (수정해봄)
         for (int j = 1; j <= p; j++) {  // z노드에서 y노드로 키 복사
             y->key[m + 1 + j] = z->key[j];
+            // y->key[m + j] = z->key[j];
         }
         for (int j = 1; j <= p + 1; j++) {  //z노드에서 y노드로 child Ptr 복사
             y->c[m + 1 + j] = z->c[j];
+            // y->c[m + j] = z->c[j];
         }
 
         y->N = m + p + 1;                      // 크기 갱신
@@ -294,9 +304,9 @@ void delete_Key(Node **root_address, Node *x, int k) {
         }
         x->N = x->N - 1;
 
-        if (x->N == 0) {       // 만약 x의 크기가 0이면, 지워주고 루트노드 재설정해주기
-            free(x);           // 루트 삭제
-            root_address = y;  // 루트 재설정
+        if (x->N == 0) {        // 만약 x의 크기가 0이면, 지워주고 루트노드 재설정해주기
+            free(x);            // 루트 삭제
+            *root_address = y;  // 루트 재설정
         }
 
         free(z);
@@ -337,8 +347,14 @@ int main() {
         min_degree = 2;
     }
 
-    for (int j = 1; j <= 100; j++) {  // 포문은 왜 안될까?!
+    for (int j = 1; j <= 30; j++) {  // 포문은 왜 안될까?!
         insertKey(&root, root, j);
+    }
+
+    // printAll(root, 0);
+
+    for (int j = 1; j <= 30; j = j + 2) {  // 포문은 왜 안될까?!
+        delete_Key(&root, root, j);
     }
 
     // 메인 실행부분
