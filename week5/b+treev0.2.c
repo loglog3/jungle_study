@@ -13,10 +13,12 @@ typedef struct TREE {
 } Tree;
 
 typedef struct NODE {
-    struct NODE **c;
-    int *key;  // 키
-    int N;     // 갯수
-    int leaf;  // 리프
+    struct NODE **c;    //자식노드 배열의 주소
+    struct NODE *link;  // (질문) 이게 가능한
+    int *key;           // 키
+    int N;              // 갯수
+    int leaf;           // 리프
+
 } Node;
 
 // 프린트
@@ -25,22 +27,67 @@ void printAll(Node *root, int depth) {
     Node *node = root;
     if (node->leaf == 1) {
         for (int i = 1; i <= depth; i++) {
-            printf("                   ");
+            printf("               ");
         }
         for (int vIdx = 1; vIdx <= node->N; vIdx++) {
-            printf("%6d", node->key[vIdx]);
+            printf("%5d", node->key[vIdx]);
         }
         return;
     }
     if (node->leaf == 0) {
         for (int i = 1; i <= depth; i++) {
-            printf("                   ");
+            printf("               ");
         }
         for (int vIdx = 1; vIdx <= node->N; vIdx++) {
             printf("%4d", node->key[vIdx]);
         }
         for (int vIdx = 1; vIdx <= node->N + 1; vIdx++) {
             printAll(node->c[vIdx], depth + 1);
+        }
+    }
+}
+
+//리프노트의 linked leaves 설정
+int maxRangeSize;  // search_key 고도화 한 것
+int *search_Range(Node *x, int s, int e) {
+    if (x->leaf == 1) {  //x가 리프노드일경우
+        // Node **array = (Node **)malloc((maxRangeSize + 1) * sizeof(Node *));  // 배열만들기
+        // int *array = (int)malloc((maxRangeSize + 1) * sizeof(int));  // 배열만들기
+        int i = 1;
+        while (s > x->key[i]) {  //시작노드 i설정
+            i++;
+        }
+        // i부터 시작하면 된다.
+        // int j = 1;
+        while (1) {
+            // array[j] = (int)x->key[i];  // array에 담아줌
+            printf("%4d", x->key[i]);
+            // j++;
+            i++;
+            if (i > x->N) {             //이번노드 다 담으면 다음노드 다음노드로 넘어감
+                if (x->link == NULL) {  //다음노드가 없으면 return
+                    // return array;
+                    return;
+                }
+                x = x->link;  // 다음노드로 이동
+                i = 1;        // node인덱스 초기화
+                continue;
+            }
+            if (x->key[i] >= e) {  // e 보다 x->key[i] 가 커지면, 그만담기
+                // return array;
+                return;
+            }
+        }
+
+    } else {
+        int i = 1;
+        while (x->key[i] < s && i <= x->N) {
+            i++;
+        }
+        if (x->key[i] == s) {
+            search_Range(x->c[i + 1], s, e);
+        } else {
+            search_Range(x->c[i], s, e);
         }
     }
 }
@@ -55,37 +102,66 @@ Node *createNode(int leaf) {
     newNode->c = c;
     newNode->leaf = (int)leaf;
     newNode->N = 0;  // 생성노드 초기크기 0
+    newNode->link = NULL;
 
     return newNode;
 };
 
 //삽입 함수
-//삽입-나누기
-void split_Child(Node *x, int i) {
-    Node *z = createNode(0);  //일단 리프노드는 아니고
+//삽입-나누기 B+트리 반영부분
+void split_Child(Node *x, int i) {  // i가 올라온 녀석의 key 인덱스, i+1이 value가 있을 child의 인덱스
+    Node *z = createNode(0);        //일단 리프노드는 아니고
     Node *y = x->c[i];
     z->leaf = y->leaf;  // y가 리프노드이면 z도 리프노드다
-    z->N = min_degree - 1;
-    for (int j = 1; j <= min_degree - 1; j++) {  // y의 기존키 새로운 z로 옮겨주기(1개 적게)
-        z->key[j] = y->key[j + min_degree];
-    };
+    // z->link = NULL;     //널 포인터 넣어주기
+    // y->link = NULL;     //널 포인터 넣어주기
+
     if (y->leaf == 0) {  // y의 기존자식 새로운 z로 옮겨주기(1개 적게)
-        for (int j = 1; j <= min_degree; j++) {
+        z->N = min_degree - 1;
+        for (int j = 1; j <= min_degree - 1; j++) {  // y의 기존키 새로운 z로 옮겨주기(1개 적게)
+            z->key[j] = y->key[j + min_degree];
+        };
+        for (int j = 1; j <= min_degree; j++) {  // y의 기존자식포인터 새로운 z로 옮겨주기(1개 적게, 즉 t개)
             z->c[j] = y->c[j + min_degree];
         }
+        y->N = min_degree - 1;                     // y크기 조정하기
+        for (int j = x->N + 1; j >= i + 1; j--) {  // 부모노드x의 자식포인터 우측으로 한번씩 옮겨주기,
+            x->c[j + 1] = x->c[j];
+        }
+        x->c[i + 1] = z;                       // 부모의 i+1번 자식포인터가 promising 자식을 가리키도록 한다
+        for (int j = x->N; j >= i - 1; j--) {  //부모노드x의 key값들을 우측으로 한칸씩 이동
+            x->key[j + 1] = x->key[j];
+        }
+        x->key[i] = y->key[min_degree];
+        x->N = x->N + 1;
     }
-    y->N = min_degree - 1;
-    for (int j = x->N + 1; j >= i + 1; j--) {
-        x->c[j + 1] = x->c[j];
+    // B+트리 수정필요부분 리프노드일 때
+    if (y->leaf == 1) {
+        // x->key[i] = y->key[min_degree + 1];  // 부모한테 중복노드올리기
+        //디버그용
+        z->N = min_degree - 1;
+        for (int j = 1; j <= min_degree - 1; j++) {  // y의 기존키 새로운 z로 옮겨주기(1개 적게즉, t-1개)
+            z->key[j] = y->key[j + min_degree];
+        };
+        // for (int j = 1; j <= min_degree; j++) {  // y의 기존자식포인터 새로운 z로 옮겨주기(1개 적게, 즉 t개) // 리프노드는 자식 없음
+        //     z->c[j] = y->c[j + min_degree];
+        // }
+        y->N = min_degree;  //y 크기 조정하기 ( t개를 y가 가져간다))
+        //아래는 btree 일치부분
+        for (int j = x->N + 1; j >= i + 1; j--) {  // 부모노드x의 자식포인터 우측으로 한번씩 옮겨주기,
+            x->c[j + 1] = x->c[j];
+        }
+        x->c[i + 1] = z;                  // 부모의 i+1번 자식포인터가 promising 자식을 가리키도록 한다
+        x->N = x->N + 1;                  //  부모노드 크기 키우기
+        for (int j = x->N; j > i; j--) {  //부모노드x의 key값들을 우측으로 한칸씩 이동 // (인덱스 확인필요 수상하다 수상해) 등호 넣었음
+            x->key[j] = x->key[j - 1];
+        }
+        x->key[i] = y->key[min_degree + 1];  // 우측으로 한칸씩 옮겼으니 부모한테 중복노드올리기?.. 위치가 여기 맞나
+        // 리프노드끼리 연결해주기
+        y->link = z;  // 이게 끝인가? 널포인터에서 제대로 값이 들어간다
     }
-    x->c[i + 1] = z;
-    for (int j = x->N; j >= i - 1; j--) {
-        x->key[j + 1] = x->key[j];
-    }
-    x->key[i] = y->key[min_degree];
-    x->N = x->N + 1;
 }
-//삽입-재귀
+//삽입-재귀 (b+트리도 똑같나?)
 void insert_Nonfull(Node *x, int k) {
     int i = x->N;
     if (x->leaf) {
@@ -182,7 +258,7 @@ void delete_Key(Node *x, int k, Tree *tree) {
             delete_Key(x->c[i + 1], k_, tree);
             return;
         }
-        // case 2-c (자식여유X, 병합하기) // (수정필요/ 왼쪽자식삭제오류 -> 해결 3-b 오른쪽자식문제였음)
+        // case 2-c (자식여유X, 병합하기)
         Node *y = x->c[i];
         Node *z = x->c[i + 1];
         int m = y->N;
@@ -199,12 +275,8 @@ void delete_Key(Node *x, int k, Tree *tree) {
             x->key[j] = x->key[j + 1];     // (중요/ 다시확인, 책이랑 다른 부분/ 확인필요) // 넣는게 맞다
         }
 
-        x->N = x->N - 1;           // 부모노드 크기조정
-        free(z);                   // z노드 메모리 제거
-        if (tree->root->N == 0) {  // 만약 x의 크기가 0이면, 지워주고 루트노드 재설정해주기
-            free(x);               // 루트 삭제
-            tree->root = y;        // 루트 재설정
-        }
+        x->N = x->N - 1;         // 부모노드 크기조정
+        free(z);                 // z노드 메모리 제거
         delete_Key(y, k, tree);  // y로 간 k를 재귀적으로 삭제하기(case1)
         return;
     }
@@ -214,23 +286,20 @@ void delete_Key(Node *x, int k, Tree *tree) {
         delete_Key(x->c[i], k, tree);
         return;
     }
-    // case 3-a-1 - right sibling
-    if (i <= x->N && x->c[i + 1]->N >= min_degree) {     // 가장 먼저 자식차수랑 i랑 비교, promising자식 부족, 오른쪽형제 충분 (중요 확인필요)
-        x->c[i]->N = x->c[i]->N + 1;                     // promising 자식의 크기를 하나 키운다
-        x->c[i]->key[min_degree] = x->key[i];            // 부모의 key를 준다. promising 자식의 커진공간에 -> 제대로 들어옴
-        x->key[i] = x->c[i + 1]->key[1];                 // 부모의 key는 우측자식의 1번key가 된다
+    // case 3.a-1 - right sibling
+    if (i <= x->N && x->c[i + 1]->N >= min_degree) {  // 가장 먼저 자식차수랑 i랑 비교, promising자식 부족, 오른쪽형제 충분 (중요 확인필요)
+        x->c[i]->key[min_degree] = x->key[i];
+        x->c[i]->N = x->c[i]->N + 1;
+        x->key[i] = x->c[i + 1]->key[1];
         x->c[i]->c[min_degree + 1] = x->c[i + 1]->c[1];  // 충분형제에서 부족으로 자식포인터 이동
-        // 디버깅 프린트 시작
-        printAll(tree->root, 0);
-        // 디버깅 프린트 끝
-        // x->c[i]->N = min_degree;                         // (promising 자식갯수 갱신) 위에서 했었는데?!
-        for (int j = 1; j < x->c[i + 1]->N; j++) {
-            x->c[i + 1]->key[j] = x->c[i + 1]->key[j + 1];  //충분형제 key 당기기
-        }
+        x->c[i]->N = min_degree;                         // promising 자식갯수 갱신
+        x->c[i + 1]->N = x->c[i + 1]->N - 1;
         for (int j = 1; j <= x->c[i + 1]->N; j++) {
-            x->c[i + 1]->c[j] = x->c[i + 1]->c[j + 1];  // 충분형제 C 당기기
+            x->c[i + 1]->key[j] = x->c[i + 1]->key[j + 1];  //충분형제 key 당기기
+            x->c[i + 1]->c[j] = x->c[i + 1]->c[j + 1];      // 충분형제 C 당기기
         }
-        x->c[i + 1]->N = x->c[i + 1]->N - 1;  // 크기줄이기는 조심해서 해야한다
+        int newSize = x->c[i + 1]->N;
+        x->c[i + 1]->c[newSize] = x->c[i + 1]->c[newSize + 1];  // 충분형제 끝에 C 당기기
         delete_Key(x->c[i], k, tree);
         return;  // 들어가는거 맞겠지? 이게 맞아?
     }
@@ -248,83 +317,45 @@ void delete_Key(Node *x, int k, Tree *tree) {
         return;  // 들어가는거 맞겠지? 이게 맞아?
     }
     // case 3.b 양쪽자식이 다 적다
-    if (i == x->N + 1) {  // i가 마지막 child이면 z는 내 왼쪽노드가 된다.
-        Node *z = x->c[i];
-        Node *y = x->c[i - 1];
-        int m = y->N;
-        int p = z->N;
-        y->key[m + 1] = x->key[i - 1];  // x에서 y오른쪽끝으로 내리기 여기서는 i-1이 해당하는 녀석이다 (맞음)
-        for (int j = 1; j <= p; j++) {  // z노드에서 y노드로 키 복사
-            y->key[m + 1 + j] = z->key[j];
-        }
-        for (int j = 1; j <= p + 1; j++) {  //z노드에서 y노드로 child Ptr 복사
-            y->c[m + 1 + j] = z->c[j];
-        }
+    // Node *y = x->c[i];
+    // Node *z = x->c[i + 1];
 
-        y->N = m + p + 1;                      // 크기 갱신
-        for (int j = i + 1; j <= x->N; j++) {  // 부모노드의 자식포인터 갱신 (수정해봄)
-            x->c[j] = x->c[j + 1];
-        }
-        x->N = x->N - 1;
-
-        // printAll(tree->root, 0);  // 디버깅용으로 찍어보기
-
-        free(z);
-        delete_Key(y, k, tree);
-
-        if (tree->root->N == 0) {  // 만약 x의 크기가 0이면, 지워주고 루트노드 재설정해주기
-            free(x);               // 루트 삭제
-            tree->root = y;        // 루트 재설정
-        }
-
-        if (x->N == 0) {
-            free(x);
-            puts("Tree is Empty");
-        }
-
-        return;
-    } else {
-        Node *y = x->c[i];
-        Node *z = x->c[i + 1];
-        int m = y->N;
-        int p = z->N;
-        y->key[m + 1] = x->key[i];      // x에서 y오른쪽끝으로 내리기 여기서는 i-1이 해당하는 녀석이다 (맞음) (수정해봄)
-        for (int j = 1; j <= p; j++) {  // z노드에서 y노드로 키 복사
-            y->key[m + 1 + j] = z->key[j];
-        }
-        for (int j = 1; j <= p + 1; j++) {  //z노드에서 y노드로 child Ptr 복사
-            y->c[m + 1 + j] = z->c[j];
-        }
-
-        y->N = m + p + 1;                      // 크기 갱신
-        for (int j = i + 1; j <= x->N; j++) {  // 부모노드의 자식포인터 갱신 (수정해봄)
-            x->c[j] = x->c[j + 1];
-        }
-        for (int j = i + 1; j <= x->N; j++) {  // 부모노드의 키 갱신 (수정해봄)
-            x->key[k] = x->c[j + 1];
-        }
-        x->N = x->N - 1;
-
-        //디버그 프린트시작
-        printAll(tree->root, 0);
-        //디버그 프린트끝
-        // printAll(tree->root, 0);  // 디버깅용으로 찍어보기
-
-        free(z);
-        delete_Key(y, k, tree);
-
-        if (tree->root->N == 0) {  // 만약 x의 크기가 0이면, 지워주고 루트노드 재설정해주기
-            free(x);               // 루트 삭제
-            tree->root = y;        // 루트 재설정
-        }
-
-        if (x->N == 0) {
-            free(x);
-            puts("Tree is Empty");
-        }
-
-        return;
+    // if (i == x->N + 1) {  // i가 마지막 child이면 z는 내 왼쪽노드가 된다.
+    // Node *z = y;
+    Node *z = x->c[i];
+    Node *y = x->c[i - 1];
+    int m = y->N;
+    int p = z->N;
+    y->key[m + 1] = x->key[i - 1];  // x에서 y오른쪽끝으로 내리기 여기서는 i-1이 해당하는 녀석이다 (맞음)
+    for (int j = 1; j <= p; j++) {  // z노드에서 y노드로 키 복사
+        y->key[m + 1 + j] = z->key[j];
     }
+    for (int j = 1; j <= p + 1; j++) {  //z노드에서 y노드로 child Ptr 복사
+        y->c[m + 1 + j] = z->c[j];
+    }
+
+    y->N = m + p + 1;                      // 크기 갱신
+    for (int j = i + 1; j <= x->N; j++) {  // 부모노드의 자식포인터 갱신 (수정해봄)
+        x->c[j] = x->c[j + 1];
+    }
+    x->N = x->N - 1;
+
+    // printAll(tree->root, 0);  // 디버깅용으로 찍어보기
+
+    free(z);
+    delete_Key(y, k, tree);
+
+    if (tree->root->N == 0) {  // 만약 x의 크기가 0이면, 지워주고 루트노드 재설정해주기
+        free(x);               // 루트 삭제
+        tree->root = y;        // 루트 재설정
+    }
+
+    if (x->N == 0) {
+        free(x);
+        puts("Tree is Empty");
+    }
+
+    return;
 }
 
 int search_Key(Node *x, int k) {
@@ -365,19 +396,11 @@ int main() {
     }
     //tree 초기화 (리프노드 = TRUE)
     Tree *tree = createTree();
-    // 더미데이터 넣기
-    for (int j = 1; j <= 10; j++) {
-        insertKey(tree, j);
-    }
-    // for (int j = 1; j <= 10; j++) {
-    //     delete_Key(tree->root, j, tree);
-    // }
 
-    // 메인 실행부분
     while (1) {
         int totalbreak = 0;
         while (1) {
-            puts("1: key 삽입, 2: key 삭제 3: key 조회 4: 트리 조회");
+            puts("1: key 삽입, 2: key 삭제 3: key 조회 4: 트리 조회 5: 범위 조회");
             int command;
             scanf("%d", &command);
 
@@ -390,6 +413,9 @@ int main() {
                     puts("이미 해당 key가 B-트리 안에 존재합니다");
                 } else {
                     insertKey(tree, inputKey);
+                    printf("------------------");
+                    printAll(tree->root, 0);  //루트에서부터 출력 시작, depth = 0부터 시작
+                    puts("\n------------------");
                 }
                 break;
             } else if (command == 2) {
@@ -399,6 +425,9 @@ int main() {
                 int isExist = search_Key(tree->root, inputKey);
                 if (isExist == 1) {
                     delete_Key(tree->root, inputKey, tree);  // tree의 루트를 넘겨줌을 잊지 말자. delete는 계속 재귀로 해야하니깐. (확인필요) Node를 넘겨줘야한다
+                    printf("------------------");
+                    printAll(tree->root, 0);  //루트에서부터 출력 시작, depth = 0부터 시작
+                    puts("\n------------------");
                 } else {
                     puts("해당하는 Key가 B트리 안에 존재하지 않습니다.\n");
                 }
@@ -414,17 +443,34 @@ int main() {
                     puts("해당하는 Key가 B트리 안에 존재하지 않습니다.\n");
                 }
             } else if (command == 4) {
+                printf("------------------");
                 printAll(tree->root, 0);
+                puts("\n------------------");
+                break;
+            } else if (command == 5) {
+                puts("조회하고 싶은 key 범위를 입력해 주세요 ('시작 숫자 끝 숫자')");
+                int startNum;
+                int endNum;
+                scanf("%d %d", &startNum, &endNum);
+                if (startNum >= endNum) {
+                    puts("범위가 잘못되었습니다.");
+                    continue;
+                }
+                maxRangeSize = (endNum - startNum);
+                int *searched_array = search_Range(tree->root, startNum, endNum);
+                // for (int i = 1; i <= sizeof(searched_array) / sizeof(int); i++)
+                //     printf("%4d", searched_array[i]);
                 printf("\n");
+                break;
             } else {
-                puts("1 또는 2를 입력해주세요.");
+                puts("올바른 숫자를 입력해주세요.");
                 break;
             }
         }
 
-        printf("------------------");
-        printAll(tree->root, 0);  //루트에서부터 출력 시작, depth = 0부터 시작
-        puts("\n------------------");
+        // printf("------------------");
+        // printAll(tree->root, 0);  //루트에서부터 출력 시작, depth = 0부터 시작
+        // puts("\n------------------");
 
         puts("계속 하시곘습니까? (1: 예, 2: 아니오)");
         while (1) {

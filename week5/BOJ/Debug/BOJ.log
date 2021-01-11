@@ -1,0 +1,4 @@
+﻿  1.c
+C:\Users\loglo\OneDrive\Desktop\week5\BOJ\1.c(24,22): error C2059: 구문 오류: '형식'
+C:\Users\loglo\OneDrive\Desktop\week5\BOJ\1.c(31,10): warning C4477: 'scanf_s' : 서식 문자열 '%d'에 'int *' 형식의 인수가 필요하지만 variadic 인수 1의 형식이 'int **'입니다.
+C:\Users\loglo\OneDrive\Desktop\week5\BOJ\1.c(33,12): warning C4013: 'createTree'이(가) 정의되지 않았습니다. extern은 int형을 반환하는 것으로 간주합니다.
