@@ -592,6 +592,7 @@ void main() {
 
 		if (type == 'i') {
 			printf("Write the number to insert and press Enter\n");
+			puts("Enter '-1' to finish insert");
 			while (true) {
 				scanf_s("%d", &insert_num);
 				if (insert_num == -1) {
