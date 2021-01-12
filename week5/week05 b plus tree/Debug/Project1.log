@@ -1,0 +1,8 @@
+﻿  소스.c
+C:\Users\loglo\source\repos\Project1\소스.c(58,34): warning C4020: 'create_node': 실제 매개 변수가 너무 많습니다.
+C:\Users\loglo\source\repos\Project1\소스.c(579,6): warning C4101: 'k' :참조되지 않은 지역 변수입니다.
+C:\Users\loglo\source\repos\Project1\소스.c(228): warning C4715: 'find_succ': 모든 제어 경로에서 값을 반환하지는 않습니다.
+C:\Users\loglo\source\repos\Project1\소스.c(242): warning C4715: 'find_pred': 모든 제어 경로에서 값을 반환하지는 않습니다.
+C:\Users\loglo\source\repos\Project1\소스.c(571): warning C4715: 'deleteCheck': 모든 제어 경로에서 값을 반환하지는 않습니다.
+C:\Users\loglo\source\repos\Project1\소스.c(556): warning C4715: 'deleteNode': 모든 제어 경로에서 값을 반환하지는 않습니다.
+  Project1.vcxproj -> C:\Users\loglo\source\repos\Project1\Debug\Project1.exe

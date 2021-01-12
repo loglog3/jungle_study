@@ -1,0 +1,4 @@
+C:\Users\loglo\source\repos\Project1\Debug\Project1.exe
+C:\Users\loglo\source\repos\Project1\Debug\Project1.pdb
+C:\Users\loglo\OneDrive\Desktop\jungle_study\week5\week05 b plus tree\Debug\week5 b+Tree.exe
+C:\Users\loglo\OneDrive\Desktop\jungle_study\week5\week05 b plus tree\Debug\week5 b+Tree.pdb
