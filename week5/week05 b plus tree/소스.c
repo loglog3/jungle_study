@@ -72,15 +72,15 @@ void print_all(btNode* x, int depth) {
 }
 */
 //version 1  simple way
+
 void print_all(btNode* x, int depth) {
-	x;
 	for (int i = 0; i <= x->key_num; i++) {
 		if (x->isLeaf != true) {
 			print_all(x->child_pointer[i], depth + 1);
 		}
 		if (i == 0) {
 			for (int j = 0; j < depth; j++) {
-				printf("-------");
+				printf("------------------");
 			}
 			for (int k = 0; k < x->key_num; k++) {
 				printf("%4d", x->keys[k]);
@@ -90,7 +90,6 @@ void print_all(btNode* x, int depth) {
 
 	}
 }
-
 
 // Methods for Insert Operation
 void split(btNode* x, int i) {
@@ -564,8 +563,17 @@ int deleteCheck(bTree* x, int k) {
 }
 
 void main() {
-	printf("Input Max Degree : \n");
-	scanf_s("%d", &order);
+	while (1) {
+		printf("Input Max Degree : \n");
+		scanf_s("%d", &order);
+		if (order >= 4 && order % 2 == 0) {
+			break;
+		}
+		else {
+			puts("Max Degree should be even and over 4. Please Input appropriate number.");
+		}
+	}
+	
 	int insert_num = 0;
 	char type;
 	int k;
@@ -579,7 +587,7 @@ void main() {
 	*/
 
 	while (true) {
-		printf("Input Operation : (Input : i, Delete : d, Search : s, Print : p)\n");
+		printf("Input Operation : (Input : i, Delete : d, Search : s, Print : p, Quit: q)\n");
 		scanf_s("\n%c", &type, 1);
 
 		if (type == 'i') {
@@ -614,6 +622,9 @@ void main() {
 				printf("%d doesn't exist in the tree\n", insert_num);
 			}
 		}
+		else if (type == 'q') {
+			exit(0); // 프로그램 종료
+ 		}
 		else if (type == 'd') {
 			scanf_s("%d", &insert_num);
 			int k = deleteCheck(tr, insert_num);
