@@ -1,3 +1,4 @@
+_CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -227,10 +228,9 @@ void delete_Key(Node **root_address, Node *x, int k) {
         x->c[i + 1]->N = x->c[i + 1]->N - 1;  // 크기줄이기는 조심해서 해야한다
         delete_Key(root_address, x->c[i], k);
         return;  // 들어가는거 맞겠지? 이게 맞아?
-    }
-    // case 3.a-2 - left sibling 오른쪽끝에있음
-    if (i >= 2 && x->c[i - 1]->N >= min_degree) {  // promising자식 부족, 왼쪽형제 충분 (중요 확인필요) // 좌측sibling 찾고싶은데, 맨 왼쪽에있는애는 이걸 못한다. 그 조건이 i>=2
-        x->c[i]->N = x->c[i]->N + 1;               //
+        // case 3.a-2 - left sibling
+    } else if (x->c[i - 1]->N >= min_degree) {  // promising자식 부족, 왼쪽형제 충분 (중요 확인필요) // 좌측sibling 찾고싶은데, 맨 왼쪽에있는애는 이걸 못한다. 그 조건이 i>=2
+        x->c[i]->N = x->c[i]->N + 1;            //
 
         for (int j = min_degree - 1; j >= 1; j--) {
             x->c[i]->key[j + 1] = x->c[i]->key[j];
@@ -263,13 +263,13 @@ void delete_Key(Node **root_address, Node *x, int k) {
             y->c[m + 1 + j] = z->c[j];
             // y->c[m + j] = z->c[j];
         }
-        y->N = m + p + 1;                      // 크기 갱신
-        for (int j = i + 1; j <= x->N; j++) {  // 부모노드의 자식포인터 갱신 (수정해봄)
-            x->c[j] = x->c[j + 1];
-        }
-        for (int j = i; j < x->N; j++) {  // 부모노드의 키 갱신 (수정해봄)
-            x->key[j] = x->key[j + 1];
-        }
+        y->N = m + p + 1;  // 크기 갱신
+        // for (int j = i; j < x->N; j++) {  // 부모노드의 자식포인터 갱신 (수정해봄)
+        //     x->c[j] = x->c[j + 1];
+        // }
+        // for (int j = i-1; j < x->N; j++) {  // 부모노드의 키 갱신 (수정해봄)
+        //     x->key[j] = x->key[j + 1];
+        // }
         x->N = x->N - 1;
 
         if (x->N == 0) {        // 만약 x의 크기가 0이면, 지워주고 루트노드 재설정해주기
@@ -347,15 +347,15 @@ int main() {
         min_degree = 2;
     }
 
-    for (int j = 1; j <= 30; j++) {  // 포문은 왜 안될까?!
+    for (int j = 1; j <= 20; j++) {  // 포문은 왜 안될까?!
         insertKey(&root, root, j);
     }
 
-    // printAll(root, 0);
+    // // printAll(root, 0);
 
-    for (int j = 1; j <= 30; j = j + 2) {  // 포문은 왜 안될까?!
-        delete_Key(&root, root, j);
-    }
+    // for (int j = 1; j <= 30; j = j + 2) {  // 포문은 왜 안될까?!
+    //     delete_Key(&root, root, j);
+    // }
 
     // 메인 실행부분
     while (1) {

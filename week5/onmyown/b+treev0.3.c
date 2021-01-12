@@ -50,22 +50,15 @@ void printAll(Node *root, int depth) {
 int maxRangeSize;  // search_key 고도화 한 것
 int *search_Range(Node *x, int s, int e) {
     if (x->leaf == 1) {  //x가 리프노드일경우
-        // Node **array = (Node **)malloc((maxRangeSize + 1) * sizeof(Node *));  // 배열만들기
-        // int *array = (int)malloc((maxRangeSize + 1) * sizeof(int));  // 배열만들기
         int i = 1;
         while (s > x->key[i]) {  //시작노드 i설정
             i++;
         }
-        // i부터 시작하면 된다.
-        // int j = 1;
         while (1) {
-            // array[j] = (int)x->key[i];  // array에 담아줌
             printf("%4d", x->key[i]);
-            // j++;
             i++;
             if (i > x->N) {             //이번노드 다 담으면 다음노드 다음노드로 넘어감
                 if (x->link == NULL) {  //다음노드가 없으면 return
-                    // return array;
                     return;
                 }
                 x = x->link;  // 다음노드로 이동
@@ -73,11 +66,9 @@ int *search_Range(Node *x, int s, int e) {
                 continue;
             }
             if (x->key[i] >= e) {  // e 보다 x->key[i] 가 커지면, 그만담기
-                // return array;
                 return;
             }
         }
-
     } else {
         int i = 1;
         while (x->key[i] < s && i <= x->N) {
@@ -112,8 +103,6 @@ void split_Child(Node *x, int i) {  // i가 올라온 녀석의 key 인덱스, i
     Node *z = createNode(0);        //일단 리프노드는 아니고
     Node *y = x->c[i];
     z->leaf = y->leaf;  // y가 리프노드이면 z도 리프노드다
-    // z->link = NULL;     //널 포인터 넣어주기
-    // y->link = NULL;     //널 포인터 넣어주기
 
     if (y->leaf == 0) {  // y의 기존자식 새로운 z로 옮겨주기(1개 적게)
         z->N = min_degree - 1;
@@ -136,15 +125,10 @@ void split_Child(Node *x, int i) {  // i가 올라온 녀석의 key 인덱스, i
     }
     // B+트리 수정필요부분 리프노드일 때
     if (y->leaf == 1) {
-        // x->key[i] = y->key[min_degree + 1];  // 부모한테 중복노드올리기
-        //디버그용
         z->N = min_degree - 1;
         for (int j = 1; j <= min_degree - 1; j++) {  // y의 기존키 새로운 z로 옮겨주기(1개 적게즉, t-1개)
             z->key[j] = y->key[j + min_degree];
         };
-        // for (int j = 1; j <= min_degree; j++) {  // y의 기존자식포인터 새로운 z로 옮겨주기(1개 적게, 즉 t개) // 리프노드는 자식 없음
-        //     z->c[j] = y->c[j + min_degree];
-        // }
         y->N = min_degree;  //y 크기 조정하기 ( t개를 y가 가져간다))
         //아래는 btree 일치부분
         for (int j = x->N + 1; j >= i + 1; j--) {  // 부모노드x의 자식포인터 우측으로 한번씩 옮겨주기,

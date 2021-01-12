@@ -109,7 +109,7 @@ void insertKey(Node **root_address, Node *root, int k) {
     Node *r = root;
     if (r->N == min_degree * 2 - 1) {
         Node *s = createNode(0);  //새로운 노드는 루트가 되고 리프가 아니다! 고로 0
-        root_address = s;
+        *root_address = s;
         s->N = 0;
         s->leaf = 0;
         s->c[1] = r;
