@@ -562,6 +562,34 @@ int deleteCheck(bTree* x, int k) {
 	}
 }
 
+void searchByRange(btNode* x, int s, int e) {
+	int i = 0;
+	while (i<x->key_num && s > x->keys[i]) {
+		i += 1;
+	}
+	if (x->isLeaf == true) {
+		while (1) {
+			for (int j = i; j <= x->key_num - 1; j++) {
+				if (x->keys[j] > e) {
+					puts("");
+					return;
+				}
+				printf("%3d", x->keys[j]);
+			}
+			if (x->link != NULL) {
+				x = x->link;
+			}
+			else {
+				break;
+			}
+		}
+	}
+	else {
+		searchByRange(x->child_pointer[i], s, e);
+	}
+	
+}
+
 void main() {
 	while (1) {
 		printf("Input Max Degree : \n");
@@ -587,7 +615,7 @@ void main() {
 	*/
 
 	while (true) {
-		printf("Input Operation : (Input : i, Delete : d, Search : s, Print : p, Quit: q)\n");
+		printf("Input Operation : (Input : i, Delete : d, Search : s, Range Search : r, Print : p, Quit: q)\n");
 		scanf_s("\n%c", &type, 1);
 
 		if (type == 'i') {
@@ -610,6 +638,7 @@ void main() {
 		}
 		else if (type == 'p') {
 			print_all(tr->root, 0);
+			puts("");
 		}
 		else if (type == 's') {
 			printf("Wirte the number to search and press Enter\n");
@@ -626,6 +655,12 @@ void main() {
 		else if (type == 'q') {
 			exit(0); // 프로그램 종료
  		}
+		else if (type == 'r') {
+			puts("Enter Range 'startNum endNum'");
+			int s; int e;
+			scanf_s("%d %d", &s, &e);
+			searchByRange(tr->root, s, e);
+		}
 		else if (type == 'd') {
 			scanf_s("%d", &insert_num);
 			int k = deleteCheck(tr, insert_num);
