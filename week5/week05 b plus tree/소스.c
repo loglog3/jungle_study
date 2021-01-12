@@ -87,7 +87,7 @@ void print_all(btNode* x, int depth) {
 			}
 			puts("");
 		}
-		
+
 	}
 }
 
@@ -103,7 +103,7 @@ void split(btNode* x, int i) {
 	if (y->isLeaf == true) {
 		y->link = z;
 		z->key_num = t - 1;
-		
+
 		for (int j = t; j < y->key_num; j++) {
 			z->keys[j - t] = y->keys[j];
 		}
@@ -589,7 +589,14 @@ void main() {
 				if (insert_num == -1) {
 					break;
 				}
-				insert(tr, insert_num);
+				sr* result = searchNode(tr->root, insert_num);
+				if (result->result == true) {
+					puts("\nthe number is already in the tree.");
+					//print_all(tr->root, 0);
+				}
+				else {
+					insert(tr, insert_num);
+				}
 			}
 		}
 		else if (type == 'p') {
