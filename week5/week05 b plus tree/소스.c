@@ -48,13 +48,13 @@ bTree* create_tree(int order) {
 	bTree* tree;
 	tree = (struct bTree*)malloc(sizeof(struct bTree));
 	//tree.order = order;
-	tree->root = create_node(order, true);
+	tree->root = create_node(true);
 	//tree->node_count = 1;
 	return tree;
 }
 
 // Methods for Printing Tree
-/*
+
 void print_all(btNode* x, int depth) {
 	int i;
 	for (i = 0; i < depth; i++) {
@@ -70,9 +70,9 @@ void print_all(btNode* x, int depth) {
 		}
 	}
 }
-*/
-//version 1  simple way
 
+//version 1  simple way
+/*
 void print_all(btNode* x, int depth) {
 	for (int i = 0; i <= x->key_num; i++) {
 		if (x->isLeaf != true) {
@@ -80,7 +80,9 @@ void print_all(btNode* x, int depth) {
 		}
 		if (i == 0) {
 			for (int j = 0; j < depth; j++) {
-				printf("------------------");
+				for (int k = 0; k < order; k++) {
+					printf("··");
+				}
 			}
 			for (int k = 0; k < x->key_num; k++) {
 				printf("%4d", x->keys[k]);
@@ -90,7 +92,7 @@ void print_all(btNode* x, int depth) {
 
 	}
 }
-
+*/
 // Methods for Insert Operation
 void split(btNode* x, int i) {
 	printf("starting split %dth node\n", i);
@@ -235,6 +237,25 @@ int find_pred(btNode* x) {//find predecessor from the sub-tree starting with the
 	}
 	else {
 		find_pred(x->child_pointer[x->key_num]);
+	}
+}
+
+int find_succ_and_change(btNode* x, int change) {//find successor from the sub-tree starting with the left node
+	printf("Finding successor and changing\n");
+	int succ = 0;
+	// If x is Leaf node, return the key on the right end. else, recursively find in the childs.
+	if (x->isLeaf == true) {
+		x->keys[0] = change;
+		succ = 1;
+		//for (int j = 0; j < x->key_num - 1; j++) {//move keys[1 to key_num-1] to keys[0 to key_num-2]
+		//	x->keys[j] = x->keys[j+1];
+		//}
+		//x->keys[x->key_num - 1] = -1;//not needed : just to make sure
+		//x->key_num -= 1;
+		return succ;
+	}
+	else {
+		find_succ_and_change(x->child_pointer[0], change);
 	}
 }
 
@@ -386,6 +407,10 @@ int deleteNode(btNode* x, int k, bTree* tree) {
 					printf("%d\n", replace_num);
 					x->keys[i] = replace_num;//x->keys[i] = K
 					deleteNode(x->child_pointer[i + 1], replace_num, tree);
+					replace_num = find_succ(x->child_pointer[i + 1]);
+					if (x->keys[i] != replace_num) {
+						x->keys[i] = replace_num;
+					}
 				}
 			}
 			else {
@@ -393,6 +418,10 @@ int deleteNode(btNode* x, int k, bTree* tree) {
 				x->keys[i] = replace_num;//x->keys[i] = K
 				printf("%d\n", replace_num);
 				deleteNode(x->child_pointer[i + 1], replace_num, tree);
+				replace_num = find_succ(x->child_pointer[i + 1]);
+				if (x->keys[i] != replace_num) {
+					x->keys[i] = replace_num;
+				}
 			}
 		}
 		// Case 2-b : (i+1)th child node has ken_num larger than t-1
@@ -411,6 +440,7 @@ int deleteNode(btNode* x, int k, bTree* tree) {
 				x->keys[i] = replace_num;//x->keys[i] = K
 				print_all(tree->root, 0);
 				deleteNode(x->child_pointer[i], replace_num, tree);
+				find_succ_and_change(x->child_pointer[i + 1], replace_num);
 			}
 		}
 		// Case 2-c : Merge (i)th child node with (i+1)th child node if both node's key_num is equal to t-1
@@ -574,12 +604,14 @@ void searchByRange(btNode* x, int s, int e) {
 					puts("");
 					return;
 				}
-				printf("%3d", x->keys[j]);
+				printf("%4d", x->keys[j]);
 			}
 			if (x->link != NULL) {
 				x = x->link;
+				i = 0;
 			}
 			else {
+				puts("");
 				break;
 			}
 		}
@@ -587,7 +619,6 @@ void searchByRange(btNode* x, int s, int e) {
 	else {
 		searchByRange(x->child_pointer[i], s, e);
 	}
-	
 }
 
 void main() {
@@ -607,12 +638,15 @@ void main() {
 	int k;
 	t = order / 2;
 	bTree* tr = create_tree(order);
-
-	/*
-	for (int j = 1; j < 1000; j++) {
+	
+	
+	for (int j = 1; j < 550; j++) {
 		insert(tr, j);
 	}
-	*/
+	for (int j = 2; j < 550; j+=2) {
+		deleteCheck(tr, j);
+		deleteCheck(tr, j);
+	}
 
 	while (true) {
 		printf("Input Operation : (Input : i, Delete : d, Search : s, Range Search : r, Print : p, Quit: q)\n");
